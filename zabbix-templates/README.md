@@ -13,7 +13,7 @@ juniper switch EX - CPU Usage
 Requirements
 -----
 
-All this templates were tested for Zabbix 2.0.0 and higher.
+All this templates were tested for Zabbix 2.0.6 and higher.
 
 License
 -------

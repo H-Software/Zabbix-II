@@ -9,7 +9,7 @@ Requirements
 
 All this templates were tested for Zabbix 2.0.6 and higher.
 
-This template tested on Centos 6.4 x76_64 OS.
+This template tested on Centos 6.4 x86_64 OS.
 
 Instalation
 -----

@@ -7,7 +7,7 @@ EX4500
 
 snmpwalk
 ---------------
-
+```
 [root@monitoring-zabbix]# snmpwalk -v 2c -c TETS-VR@public 10.0.0.10 .1.3.6.1.4.1.2636.3.1.13.1.5
 SNMPv2-SMI::enterprises.2636.3.1.13.1.5.1.1.0.0 = ""
 SNMPv2-SMI::enterprises.2636.3.1.13.1.5.2.1.2.0 = STRING: "Power Supply 1"
@@ -20,9 +20,12 @@ SNMPv2-SMI::enterprises.2636.3.1.13.1.5.7.1.0.0 = STRING: "FPC: EX4500-40F @ 0/*
 SNMPv2-SMI::enterprises.2636.3.1.13.1.5.8.1.1.0 = STRING: "PIC: 40x 1/10GE @ 0/0/*"
 SNMPv2-SMI::enterprises.2636.3.1.13.1.5.8.1.4.0 = STRING: "PIC: 2x 32GE Virtual Chassis Module @ 0/3/*"
 SNMPv2-SMI::enterprises.2636.3.1.13.1.5.9.1.0.0 = STRING: "Routing Engine 0"
+```
 
 advsnmp.discovery
 ---------------
+
+```
 [root@monitoring-zabbix externalscripts]# ./advsnmp.discovery.old 10.0.0.10 "-v2c -c TEST-VR@public" .1.3.6.1.4.1.2636.3.1.13.1.5 1.1 2.1 3.2
 {
         "data":[
@@ -105,6 +108,7 @@ advsnmp.discovery
                 }
         ]
 }
+```
 
 License
 -------

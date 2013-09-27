@@ -11,7 +11,7 @@ juniper switch EX - CPU Usage
 
 need "advsnmp.discovery" external script, https://github.com/czhujer/Zabbix-Addons/tree/master/advsnmp.discovery
 
-mysql-rerver
+mysql-server
 
 from http://www.alexanderjohn.co.uk/2013/02/01/monitoring-mysql-with-zabbix-using-the-appaloosa-zabbix-templates/ 
 and https://www.zabbix.com/forum/showthread.php?t=26503

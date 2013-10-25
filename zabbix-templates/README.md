@@ -8,13 +8,39 @@ Templates
 -----
 
 juniper switch EX - CPU Usage
+------
 
 need "advsnmp.discovery" external script, https://github.com/czhujer/Zabbix-Addons/tree/master/advsnmp.discovery
 
 mysql-server
+------
 
 from http://www.alexanderjohn.co.uk/2013/02/01/monitoring-mysql-with-zabbix-using-the-appaloosa-zabbix-templates/ 
 and https://www.zabbix.com/forum/showthread.php?t=26503
+
+rabbitmq-server
+------
+
+installation
+-------
+
+:: on monitored host
+
+1. copy files from folder "scripts" to /etc/zabbix/scripts/rabbitmq
+2. copy config file into your zabbix-agent config folder, or add co zabbix-agent config file
+3. create sudo record for command: "/usr/sbin/rabbitmqctl *" for user: zabbix, NOPASSWD
+
+OR
+
+use pupper manifest from my Repo: puppet-zabbixagent :)
+https://github.com/czhujer/puppet-zabbixagent
+
+
+:: on server
+
+import xml file (zbx_templates_rabbitmq-server.xml) as zabbix template
+
+
 
 Requirements
 -----

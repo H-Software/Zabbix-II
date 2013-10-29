@@ -41,6 +41,24 @@ https://github.com/czhujer/puppet-zabbixagent
 import xml file (zbx_templates_rabbitmq-server.xml) as zabbix template
 
 
+Linux disk io stats
+------
+
+:: on monitored host
+
+1. copy files from folder "usr-local-bin" to /usr/local/bin
+2. copy config file (from zabbix_agentd folder) into your zabbix-agent config folder, or add co zabbix-agent config file
+
+OR
+
+use pupper manifest from my Repo: puppet-zabbixagent :)
+https://github.com/czhujer/puppet-zabbixagent
+
+
+:: on server
+
+import xml file (zbx_templates_linux_disk_io_stats.xml) as zabbix template
+
 
 Requirements
 -----

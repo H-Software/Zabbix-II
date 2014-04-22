@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>2.0</version>
-    <date>2014-04-17T08:31:22Z</date>
+    <date>2014-04-22T12:20:53Z</date>
     <groups>
         <group>
             <name>Templates</name>
+        </group>
+        <group>
+            <name>Templates - Windows</name>
         </group>
     </groups>
     <templates>
@@ -15,10 +18,16 @@
                 <group>
                     <name>Templates</name>
                 </group>
+                <group>
+                    <name>Templates - Windows</name>
+                </group>
             </groups>
             <applications>
                 <application>
                     <name>TSM backup stats</name>
+                </application>
+                <application>
+                    <name>TSM daily amount of data</name>
                 </application>
                 <application>
                     <name>TSM occupancy</name>
@@ -31,6 +40,84 @@
                 </application>
             </applications>
             <items>
+                <item>
+                    <name>Count of failed backups (from 24Hours)</name>
+                    <type>0</type>
+                    <snmp_community/>
+                    <multiplier>0</multiplier>
+                    <snmp_oid/>
+                    <key>tsms.count_of_failed_backups</key>
+                    <delay>43200</delay>
+                    <history>90</history>
+                    <trends>365</trends>
+                    <status>0</status>
+                    <value_type>3</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <delta>0</delta>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privpassphrase/>
+                    <formula>1</formula>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <data_type>0</data_type>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications>
+                        <application>
+                            <name>TSM backup stats</name>
+                        </application>
+                    </applications>
+                    <valuemap/>
+                </item>
+                <item>
+                    <name>Count of missed backups (from 24Hours)</name>
+                    <type>0</type>
+                    <snmp_community/>
+                    <multiplier>0</multiplier>
+                    <snmp_oid/>
+                    <key>tsms.count_of_missed_backups</key>
+                    <delay>43200</delay>
+                    <history>90</history>
+                    <trends>365</trends>
+                    <status>0</status>
+                    <value_type>3</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <delta>0</delta>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privpassphrase/>
+                    <formula>1</formula>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <data_type>0</data_type>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications>
+                        <application>
+                            <name>TSM backup stats</name>
+                        </application>
+                    </applications>
+                    <valuemap/>
+                </item>
                 <item>
                     <name>Count of node's Sessions</name>
                     <type>0</type>
@@ -66,6 +153,45 @@
                     <applications>
                         <application>
                             <name>TSM server Usage</name>
+                        </application>
+                    </applications>
+                    <valuemap/>
+                </item>
+                <item>
+                    <name>Count of successfully completed backups (from 24Hours)</name>
+                    <type>0</type>
+                    <snmp_community/>
+                    <multiplier>0</multiplier>
+                    <snmp_oid/>
+                    <key>tsms.count_of_completed_backups</key>
+                    <delay>43200</delay>
+                    <history>90</history>
+                    <trends>365</trends>
+                    <status>0</status>
+                    <value_type>3</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <delta>0</delta>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privpassphrase/>
+                    <formula>1</formula>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <data_type>0</data_type>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications>
+                        <application>
+                            <name>TSM backup stats</name>
                         </application>
                     </applications>
                     <valuemap/>
@@ -350,7 +476,7 @@
                     <multiplier>0</multiplier>
                     <snmp_oid/>
                     <key>tsms.missed_backups</key>
-                    <delay>3600</delay>
+                    <delay>43200</delay>
                     <history>90</history>
                     <trends>365</trends>
                     <status>0</status>
@@ -389,7 +515,7 @@
                     <multiplier>0</multiplier>
                     <snmp_oid/>
                     <key>tsms.performed_backups</key>
-                    <delay>3600</delay>
+                    <delay>43200</delay>
                     <history>90</history>
                     <trends>365</trends>
                     <status>0</status>
@@ -428,7 +554,7 @@
                     <multiplier>0</multiplier>
                     <snmp_oid/>
                     <key>tsms.success_performed_backups</key>
-                    <delay>3600</delay>
+                    <delay>43200</delay>
                     <history>90</history>
                     <trends>365</trends>
                     <status>0</status>
@@ -463,12 +589,81 @@
             </items>
             <discovery_rules>
                 <discovery_rule>
+                    <name>daily amount discovery</name>
+                    <type>0</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>tsms.d_amount_discovery</key>
+                    <delay>43200</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privpassphrase/>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>:</filter>
+                    <lifetime>7</lifetime>
+                    <description/>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>daily amount of data on &quot;{#ENTITYNAME}&quot;</name>
+                            <type>0</type>
+                            <snmp_community/>
+                            <multiplier>0</multiplier>
+                            <snmp_oid/>
+                            <key>tsms.d-amount_usage[&quot;{#ENTITYNAME}&quot;]</key>
+                            <delay>43200</delay>
+                            <history>90</history>
+                            <trends>365</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
+                            <allowed_hosts/>
+                            <units>B</units>
+                            <delta>0</delta>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privpassphrase/>
+                            <formula>1</formula>
+                            <delay_flex/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <data_type>0</data_type>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description/>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>TSM daily amount of data</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes/>
+                    <graph_prototypes/>
+                </discovery_rule>
+                <discovery_rule>
                     <name>occupancy usage discovery</name>
                     <type>0</type>
                     <snmp_community/>
                     <snmp_oid/>
                     <key>tsms.occupancy_usage_discovery</key>
-                    <delay>400</delay>
+                    <delay>43200</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_securityname/>
@@ -495,7 +690,7 @@
                             <multiplier>0</multiplier>
                             <snmp_oid/>
                             <key>tsms.occupancy_usage_node[&quot;{#NODENAME}&quot;]</key>
-                            <delay>300</delay>
+                            <delay>43200</delay>
                             <history>90</history>
                             <trends>365</trends>
                             <status>0</status>
@@ -570,7 +765,7 @@
                     <snmp_community/>
                     <snmp_oid/>
                     <key>tsms.stgpool_usage_discovery</key>
-                    <delay>400</delay>
+                    <delay>43200</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_securityname/>
@@ -809,6 +1004,62 @@
             </graph_items>
         </graph>
         <graph>
+            <name>TSM Server Stats - Count of scheduled backups</name>
+            <width>900</width>
+            <height>200</height>
+            <yaxismin>0.0000</yaxismin>
+            <yaxismax>100.0000</yaxismax>
+            <show_work_period>1</show_work_period>
+            <show_triggers>1</show_triggers>
+            <type>1</type>
+            <show_legend>1</show_legend>
+            <show_3d>0</show_3d>
+            <percent_left>0.0000</percent_left>
+            <percent_right>0.0000</percent_right>
+            <ymin_type_1>0</ymin_type_1>
+            <ymax_type_1>0</ymax_type_1>
+            <ymin_item_1>0</ymin_item_1>
+            <ymax_item_1>0</ymax_item_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>0</sortorder>
+                    <drawtype>0</drawtype>
+                    <color>FF9933</color>
+                    <yaxisside>0</yaxisside>
+                    <calc_fnc>2</calc_fnc>
+                    <type>0</type>
+                    <item>
+                        <host>Template_TSM_Server_on_Windows</host>
+                        <key>tsms.count_of_missed_backups</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <drawtype>0</drawtype>
+                    <color>009966</color>
+                    <yaxisside>0</yaxisside>
+                    <calc_fnc>2</calc_fnc>
+                    <type>0</type>
+                    <item>
+                        <host>Template_TSM_Server_on_Windows</host>
+                        <key>tsms.count_of_completed_backups</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <drawtype>0</drawtype>
+                    <color>FF0000</color>
+                    <yaxisside>0</yaxisside>
+                    <calc_fnc>2</calc_fnc>
+                    <type>0</type>
+                    <item>
+                        <host>Template_TSM_Server_on_Windows</host>
+                        <key>tsms.count_of_failed_backups</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
             <name>TSM Server Stats - TSM ARCHLOG Usage</name>
             <width>900</width>
             <height>200</height>
@@ -942,4 +1193,3 @@
         </graph>
     </graphs>
 </zabbix_export>
-

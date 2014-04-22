@@ -7,6 +7,25 @@ A collection of Zabbix templates
 Templates
 -----
 
+IBM Tivoli Storage Server - On Windows
+-----
+
+installation
+-------
+set powershell policy: 
+    Set-ExecutionPolicy Unrestricted
+
+create user/admin in TSM:
+    register admin monitor monpass (or something like that)
+    grant auth monitor cl=operator
+
+copy scripts into zabbix-agent directory
+
+insert userparameters into your config file
+
+import template (xml file) into your zabbix server
+
+
 juniper switch EX - CPU Usage
 ------
 

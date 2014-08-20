@@ -4,13 +4,13 @@ Zabbix-templates
 A collection of Zabbix templates
 
 
-Templates
+A. Templates
 -
 
-IBM Tivoli Storage Server - On Windows
+1. IBM Tivoli Storage Server - On Windows
 -----
 
-installation
+1.1 installation
 -------
 set powershell policy: 
     Set-ExecutionPolicy Unrestricted
@@ -26,21 +26,21 @@ insert userparameters into your config file
 import template (xml file) into your zabbix server
 
 
-juniper switch EX - CPU Usage
+2. juniper switch EX - CPU Usage
 ------
 
 need "advsnmp.discovery" external script, https://github.com/czhujer/Zabbix-Addons/tree/master/advsnmp.discovery
 
-mysql-server
+3. mysql-server
 ------
 
 from http://www.alexanderjohn.co.uk/2013/02/01/monitoring-mysql-with-zabbix-using-the-appaloosa-zabbix-templates/ 
 and https://www.zabbix.com/forum/showthread.php?t=26503
 
-rabbitmq-server
+4. rabbitmq-server
 ------
 
-installation
+4.1 installation
 -------
 
 :: on monitored host
@@ -60,7 +60,7 @@ https://github.com/czhujer/puppet-zabbixagent
 import xml file (zbx_templates_rabbitmq-server.xml) as zabbix template
 
 
-Linux disk io stats
+5. Linux disk io stats
 ------
 
 tested on:
@@ -68,7 +68,7 @@ tested on:
 Centos 6.x x86_64
 Ubuntu LTS 12.04 x86_64
 
-instalation
+5.1 instalation
 -------
 
 :: on monitored host
@@ -97,7 +97,7 @@ updated parse script and zabbix userparameters
 added debug mode for zbx_parse_iostat_values.sh scripts
 
 
-IBM BladeCenter Chassis Stats
+6. IBM BladeCenter Chassis Stats
 -----
 For IBM BladeCenter H/S Chassis
 
@@ -105,12 +105,12 @@ For IBM BladeCenter H/S Chassis
 
 - S chassis has one power domain (items "Power domain 2.." will be unsupported)
 
-Monitored items
+6.1 Monitored items
 ------
 
 TDB
 
-instalation
+6.2 instalation
 -------
 
 :: on zabbix server
@@ -120,21 +120,21 @@ import xml file as zabbix template
 copy script "ibm_amm_snmpget.sh" into external script folder
 
 
-Requirements
+B. Requirements
 --
 
 All this templates were tested for Zabbix 2.0.6 and higher (2.0.x).
 
-License
+C. License
 --
 
 This template were distributed under GNU General Public License 2.
 
-### Copyright
+D. ### Copyright
 
 Copyright (c) 2013-2014 Patrik Majer
   
-### Authors
+E. ### Authors
 
 Patrik Majer
       (patrik.majer.pisek |at| gmail |dot| com)

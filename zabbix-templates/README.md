@@ -97,10 +97,33 @@ updated parse script and zabbix userparameters
 added debug mode for zbx_parse_iostat_values.sh scripts
 
 
+IBM BladeCenter Chassis Stats
+-----
+For IBM BladeCenter H/S Chassis
+
+- Both Chassis tested with AMM (Advanced Mangement Module)
+
+- S chassis has one power domain (items "Power domain 2.." will be unsupported)
+
+Monitored items
+------
+
+TDB
+
+instalation
+-------
+
+:: on zabbix server
+
+import xml file as zabbix template
+
+copy script "ibm_amm_snmpget.sh" into external script folder
+
+
 Requirements
 -----
 
-All this templates were tested for Zabbix 2.0.6 and higher.
+All this templates were tested for Zabbix 2.0.6 and higher (2.0.x).
 
 License
 -------

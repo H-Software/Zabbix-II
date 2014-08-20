@@ -5,7 +5,7 @@ A collection of Zabbix templates
 
 
 Templates
------
+-
 
 IBM Tivoli Storage Server - On Windows
 -----
@@ -121,18 +121,18 @@ copy script "ibm_amm_snmpget.sh" into external script folder
 
 
 Requirements
------
+--
 
 All this templates were tested for Zabbix 2.0.6 and higher (2.0.x).
 
 License
--------
+--
 
 This template were distributed under GNU General Public License 2.
 
 ### Copyright
 
-Copyright (c) 2013 Patrik Majer
+Copyright (c) 2013-2014 Patrik Majer
   
 ### Authors
 

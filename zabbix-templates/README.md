@@ -130,11 +130,13 @@ C. License
 
 This template were distributed under GNU General Public License 2.
 
-D. ### Copyright
+D. Copyright
+--
 
 Copyright (c) 2013-2014 Patrik Majer
   
-E. ### Authors
+E.  Authors
+--
 
 Patrik Majer
       (patrik.majer.pisek |at| gmail |dot| com)

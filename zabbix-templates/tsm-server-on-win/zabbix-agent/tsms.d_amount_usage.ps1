@@ -52,7 +52,12 @@ else {
   
   if($item -Like "tsms.d_amount_usage"){
 
-     echo $output
+     if($output.length -le 2){
+	echo "0"
+     }
+     else{
+	echo $output
+     }
 
   }
   else{

@@ -78,7 +78,7 @@ Ubuntu LTS 12.04 x86_64
 
 OR
 
-use pupper manifest from my Repo: puppet-zabbixagent :)
+use puppet manifest from my Repo: puppet-zabbixagent :)
 https://github.com/czhujer/puppet-zabbixagent
 
 

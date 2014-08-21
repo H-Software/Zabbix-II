@@ -1,6 +1,7 @@
 
 Param(
-  [string]$item
+  [string]$item,
+  [string]$var
 )
 
 if( $item -Like "tsms.count_of_completed_backups"){
@@ -12,9 +13,17 @@ elseif ($item -Like "tsms.count_of_failed_backups"){
 elseif ($item -Like "tsms.count_of_missed_backups"){
     $sql = "select count(*) from events where schedule_name like 'CS%' and TIMESTAMPDIFF(4,CHAR(current_timestamp-scheduled_start)) <= 1440 and status='Missed'"
 }
+elseif ($item -Like "tsms.query_status"){
+    $sql = "query status"
+}
 
 $command = "C:\Program files\Tivoli\TSM\server\tsmdiag\dsmadmc.exe"
-$params = "-id=monitor -pa=monpass -tab -dataonly=yes `"" + $sql + "`" "
+if($item -Like "tsms.query_status"){
+  $params = "-id=monitor -pa=monpass -comma -dataonly=yes `"" + $sql + "`" "
+}
+else{
+  $params = "-id=monitor -pa=monpass -tab -dataonly=yes `"" + $sql + "`" "
+}
 
 $timeout = "1000"
 
@@ -46,6 +55,30 @@ if ( ! $ProcessWait ) {
   $Process.kill() 
 }
 else {
-  echo $output
+
+  if($item -Like "tsms.query_status"){
+
+	$OutputArr = $output.Split(",");
+
+        if($var -Like "Availability"){
+	  $key = 16
+	}
+	else{
+	  echo ZBX_NOTSUPPORTED
+	  exit 1
+	}
+
+	if($outputArr[16] -eq "Enabled"){
+	  echo 1
+	}
+	else{
+	  echo 0
+	}
+
+  }
+  else{
+  	echo $output
+  }
+
 }
 

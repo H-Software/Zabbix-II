@@ -5,7 +5,8 @@ Param(
 )
 
 if( $item -Like "tsms.d_amount_discovery"){
-    $sql = "select node_name, sum(PHYSICAL_MB) from occupancy group by node_name"
+    #$sql = "select node_name, sum(PHYSICAL_MB) from occupancy group by node_name"
+    $sql = "select ENTITY from summary where activity='BACKUP' and TIMESTAMPDIFF(4,CHAR(current_timestamp-start_time)) <= 1440 group by entity"
 }
 elseif ($item -Like "tsms.d_amount_usage"){
     $sql = "select sum(BYTES) from summary where activity='BACKUP' and TIMESTAMPDIFF(4,CHAR(current_timestamp-start_time)) <= 1440 and ENTITY = '$entityname'"

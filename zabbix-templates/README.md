@@ -10,7 +10,16 @@ A. Templates
 1. IBM Tivoli Storage Server - On Windows
 -----
 
-1.1 installation
+- for IBM TSM Server on Windows
+- with DB2
+- tested on Windows 2008 R2, IBM TSM 6.3, IBM DB2
+
+1.1 Monitored items
+------
+
+TDB
+
+1.2 installation
 -------
 set powershell policy: 
     Set-ExecutionPolicy Unrestricted

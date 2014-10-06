@@ -29,9 +29,20 @@ Instalation
 [root@..]# chown root:root advsnmp.discovery
 ```
 
-2. import xml file to zabbix server
+2. create symlink for others rules
 
-3. enjoy it!
+```
+[root@..]# cd /etc/zabbix/externalscripts
+[root@..]# ln -s advsnmp.discovery advsnmp.discovery2
+[root@..]# ln -s advsnmp.discovery advsnmp.discovery3
+```
+
+
+3. import xml file to zabbix server
+
+4. change SNMP comunnity if you need
+
+5. enjoy it!
 
 [OPTIONAL] check yours result of discovery with examples in docs-verification folder
 

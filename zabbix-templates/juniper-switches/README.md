@@ -1,15 +1,18 @@
-juniper-switch-ex
+juniper-switches
 =========
 
-1. juniper switch EX - CPU Usage
+1. Template SNMP_Juniper Switch EX - Chassis Stats
 =====
 
 Requirements
 -----
 
-All this templates were tested for Zabbix 2.0.6 and higher.
+All this templates were tested with Zabbix 2.0.x and Centos 6.x x86_64.
 
-This template tested on Centos 6.4 x86_64 OS.
+Supproted devices are:
+Switches EX series (tested on 4200,2200)
+Juniper Qfabric
+Juniper VC (virtual chassis) with EX 3300
 
 Instalation
 -----
@@ -30,6 +33,23 @@ Instalation
 
 [OPTIONAL] check yours result of discovery with examples in docs-verification folder
 
+Monitored items
+------
+
+* Cpu usage
+
+* Memory (buffer) usage
+
+* Temperature
+
+
+Changes
+-------
+
+v1.1 - 2014/10/07 - division of discovery rule
+v1.0 - 2013/08/14 - initial version
+
+
 License
 -------
 
@@ -37,7 +57,7 @@ This template were distributed under GNU General Public License 2.
 
 ### Copyright
 
-Copyright (c) 2013 Patrik Majer
+Copyright (c) 2013 - 2014 Patrik Majer
   
 ### Authors
 

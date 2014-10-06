@@ -85,4 +85,17 @@ Patrik Majer
 just copy of general template :)
 
 
+Monitored items
+------
 
+* Host reachability using ICMP
+
+* Device uptime
+
+
+Triggers
+------
+
+* {HOST.NAME} has just been restarted
+
+* {HOST.NAME} is UNREACHABLE or DOWN

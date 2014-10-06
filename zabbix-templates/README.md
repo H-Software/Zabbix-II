@@ -35,7 +35,7 @@ insert userparameters into your config file
 import template (xml file) into your zabbix server
 
 
-2. juniper switch EX - CPU Usage
+2. Juniper switches - Chassis Stats, Generic
 ------
 
 need "advsnmp.discovery" external script, https://github.com/czhujer/Zabbix-Addons/tree/master/advsnmp.discovery

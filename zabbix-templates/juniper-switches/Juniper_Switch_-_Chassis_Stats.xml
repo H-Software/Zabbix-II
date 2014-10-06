@@ -6,9 +6,6 @@
         <group>
             <name>Templates</name>
         </group>
-        <group>
-            <name>Templates - cust - TCP-DC</name>
-        </group>
     </groups>
     <templates>
         <template>

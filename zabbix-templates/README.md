@@ -97,7 +97,7 @@ https://github.com/czhujer/puppet-zabbixagent
 
 import xml file (zbx_templates_linux_disk_io_stats.xml) as zabbix template
 
-Changelog
+5.2 Changelog
 -------
 
 v1.1 - 2013/10/30

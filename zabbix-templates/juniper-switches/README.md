@@ -49,6 +49,7 @@ Changes
 -------
 
 v1.1 - 2014/10/07 - division of discovery rule
+
 v1.0 - 2013/08/14 - initial version
 
 

@@ -1,7 +1,7 @@
 juniper-switches
 =========
 
-1. Template SNMP_Juniper Switch EX - Chassis Stats
+1. Juniper Switch - Chassis Stats
 =====
 
 Requirements
@@ -10,9 +10,11 @@ Requirements
 All this templates were tested with Zabbix 2.0.x and Centos 6.x x86_64.
 
 Supproted devices are:
+```
 Switches EX series (tested on 4200,2200)
 Juniper Qfabric
 Juniper VC (virtual chassis) with EX 3300
+```
 
 Instalation
 -----

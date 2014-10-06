@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# IBM Storwize V7000 autodiscovery shell script for Zabbix
+#
+# Sends volume/mdisk/pool LLD JSON data to LLD trapper items "svc.discovery.<volume-mdisk|volume|mdisk|pool>"
+# Use with "_Special_Storwize_Perf" Zabbix template
+#
+
+# 'Hostname' of the host which will collect data
+HOSTNAME=$3
+#
+SVC_USER=$1
+#
+SVC_PWD=$2
+#
+D_TYPE=$4
+#
+#DEBUG="--debug"
+
+if [ $# -lt 4 ]
+ then
+    echo "ZBX_ERROR: Not enough parameters"
+     echo " Usage: svc_perf_discovery_sender_zabbix <SVC_USER> <SVC_PWD> <TO_WHICH_HOST_SEND_DATA_IN_ZABBIX> <DISCOVERY_TYPE>"
+     echo " Zabbix External Check Item ex.: svc_perf_discovery_sender_zabbix[]"
+  exit 2
+fi
+
+#/usr/bin/python /etc/zabbix/externalscripts/svc_perf_discovery_sender.py "$DEBUG" --clusters "$CLUSTER" --user "$SVC_USER" --password "$SVC_PWD" >>"$ERR_LOG" 2>&1
+/usr/bin/python /usr/lib/zabbix/externalscripts/svc_perf_discovery_sender_zabbix.py "$DEBUG" --clusters "$HOSTNAME" --user "$SVC_USER" --password "$SVC_PWD" --discovery-types "$D_TYPE"
+

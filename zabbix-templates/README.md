@@ -131,6 +131,48 @@ import xml file as zabbix template
 copy script "ibm_amm_snmpget.sh" into external script folder
 
 
+7. Template IBM Storwize Perf
+-----
+
+worse quality (dont works items/graphs with pool capacity etc)
+
+tested with IBM Storwise SVC V7000
+
+DOCS:
+
+http://ma-tty.blogspot.cz/2013/01/ibm-storwize-v7000-performance.html
+
+https://github.com/ma-tty/zabbix
+
+7.1 instalation
+-------
+
+copy all files from scripts folder to your zabbix server
+
+change paths in all scripts
+
+generate ssh key for login into storwize (controller) 
+
+if it's neccessery download python modules
+
+import xml as template
+
+7.2 Monitored items
+-------
+
+TDB
+
+7.3 Triggers
+-------
+
+TDB
+
+7.4 Authors
+-------
+
+* Matvey Marinin
+
+
 B. Requirements
 --
 

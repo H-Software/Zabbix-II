@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+# IBM Storwize V7000 performance monitoring shell script for Zabbix
+#
+# Sends perf data from svc_perf_wbem.py to Zabbix with zabbix_sender
+# Handles all caching and logging, called from /etc/cron.d/svc_perf_cron every 5 min.
+#
+# 2013 Matvey Marinin
+#
+# Usage:
+#   svc_perf <cluster>
+#
+# Arguments:
+#   cluster = Dns name or IP of Storwize V7000 block node (not Storwize V7000 Unified mgmt node!)
+#
+#
+# Where is your zabbix server
+ZBXSERVER=127.0.0.1
+# where is zabbix_sender tool?
+ZBXSENDER=/usr/bin/zabbix_sender
+# 'Hostname' of the host which will collect data
+HOSTNAME=$3
+#
+SVC_USER=$1
+#
+SVC_PWD=$2
+
+if [ $# -lt 3 ]
+ then
+    echo "ZBX_ERROR: Not enough parameters"
+     echo " Usage: svc_perf_zabbix <SVC_USER> <SVC_PWD> <TO_WHICH_HOST_SEND_DATA_IN_ZABBIX>"
+     echo " Zabbix External Check Item ex.: svc_perf_zabbix[]"
+  exit 2
+fi
+
+CLUSTER=$3
+
+CACHE_FILE=/var/cache/zabbix/svc_perf.$CLUSTER.cache
+ERR_LOG=/var/cache/zabbix/svc_perf.$CLUSTER.errlog
+
+if [ ! -e "$ERR_LOG" ] ; then
+    /bin/touch $ERR_LOG > /dev/null 2>&1
+fi
+
+if [ "$?" = "0" ]; then
+    echo >>"$ERR_LOG" > /dev/null 2>&1
+else
+    echo "ZBX_ERROR: Cannot create error log!" 1>&2
+    exit 1
+fi
+
+if [ "$?" = "0" ]; then
+:
+else
+    echo "ZBX_ERROR: Cannot write into error log!" 1>&2
+    exit 1
+fi
+
+if [ ! -e "$CACHE_FILE" ] ; then
+    touch "$CACHE_FILE" > /dev/null 2>&1
+fi
+
+if [ "$?" = "0" ]; then
+:
+else
+    echo "ZBX_ERROR: Cannot create cache log!" 1>&2
+    exit 1
+fi
+
+date >>"$ERR_LOG"
+/usr/bin/python /usr/lib/zabbix/externalscripts/svc_perf_wbem.py --cluster $CLUSTER --user "$SVC_USER" --password "$SVC_PWD" --cachefile "$CACHE_FILE" 2>>"$ERR_LOG" | zabbix_sender -z $ZBXSERVER -s $HOSTNAME -T -i - |tee "$ERR_LOG"
+date >>"$ERR_LOG"
+
+
+

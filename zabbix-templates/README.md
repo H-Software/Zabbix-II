@@ -138,6 +138,8 @@ worse quality (dont works items/graphs with pool capacity etc)
 
 tested with IBM Storwise SVC V7000
 
+"acknowledged" errors are handled by Macro "{$ERROR_COUNTER_ACK_POS}"
+
 DOCS:
 
 http://ma-tty.blogspot.cz/2013/01/ibm-storwize-v7000-performance.html
@@ -157,13 +159,33 @@ if it's neccessery download python modules
 
 import xml as template
 
+create host
+
+link template to host
+
+create Macros: {$ERROR_COUNTER_ACK_POS}, {$SVC_PWD}, {$SVC_USER}
+
 7.2 Monitored items
 -------
 
-TDB
+* Error count
+
+* mdisk - IOPS
+
+* mdisk - IO time
+
+* mdisk - Throughput
+
+* volume - IOPS
+
+* volume - IO time
+
+* volume - Throughput
 
 7.3 Triggers
 -------
+
+* New Error(s)
 
 TDB
 

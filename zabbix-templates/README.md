@@ -40,6 +40,8 @@ import template (xml file) into your zabbix server
 
 need "advsnmp.discovery" external script, https://github.com/czhujer/Zabbix-Addons/tree/master/advsnmp.discovery
 
+NETX INTO in Juniper-switches folder...
+
 3. mysql-server
 ------
 

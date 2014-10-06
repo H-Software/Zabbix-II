@@ -77,3 +77,12 @@ Copyright (c) 2013 - 2014 Patrik Majer
 
 Patrik Majer
       (patrik.majer.pisek |at| gmail |dot| com)
+
+
+2. Juniper Switch - Generic
+=====
+
+just copy of general template :)
+
+
+

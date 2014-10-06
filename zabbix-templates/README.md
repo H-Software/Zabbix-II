@@ -60,7 +60,7 @@ and https://www.zabbix.com/forum/showthread.php?t=26503
 
 OR
 
-use pupper manifest from my Repo: puppet-zabbixagent :)
+use puppet manifest from my Repo: puppet-zabbixagent :)
 https://github.com/czhujer/puppet-zabbixagent
 
 

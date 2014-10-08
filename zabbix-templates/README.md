@@ -194,6 +194,29 @@ TDB
 
 * Matvey Marinin
 
+8. Template SNMP Interfaces - Advanced
+-----
+
+based on standart SNMP Interfaces, but discovery rule results return more infos
+
+currently: If-Index, IF-Descr, If-OperStatus and !!! ALL these items !!!, so you can a complex expression for "filter"
+
+
+8.1 instalation
+-------
+
+copy script to externalscripts folder to your zabbix server
+
+install python NET::SNMP module (http://search.cpan.org/~dtown/Net-SNMP-v6.0.1/lib/Net/SNMP.pm)
+
+import xml file as template
+
+
+8.2 Monitored items
+-------
+
+Same as in SNMP Interface
+
 
 B. Requirements
 --

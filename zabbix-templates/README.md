@@ -79,6 +79,8 @@ tested on:
 Centos 6.x x86_64
 Ubuntu LTS 12.04 x86_64
 
+Zabbix 2.0.x and 2.2 (appliance)
+
 5.1 instalation
 -------
 
@@ -99,6 +101,11 @@ import xml file (zbx_templates_linux_disk_io_stats.xml) as zabbix template
 
 5.2 Changelog
 -------
+
+v.1.1.1 - 2014/10/11
+
+update discovery time (1x per day)
+small fix discovery script for valid JSON (Zabbix 2.2 compat)
 
 v1.1 - 2013/10/30
 

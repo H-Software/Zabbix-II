@@ -29,7 +29,7 @@
                     <snmp_community/>
                     <snmp_oid/>
                     <key>custom.disks.iostats.discovery_perl</key>
-                    <delay>3600</delay>
+                    <delay>86400</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_securityname/>

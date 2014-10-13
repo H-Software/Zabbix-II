@@ -35,7 +35,7 @@ sub get_vmname_by_id
   return $vmname
   }
 
-$firstline = 1;
+$first = 1;
 print "{\n";
 print "\t\"data\":[\n\n";
 

@@ -89,7 +89,7 @@ while (defined($s->get_next_request(@args)))
 my $id;
 my $role;
 
-my $firstline;
+my $firstline = 1;
 print "{\n";
 print "\t\"data\":[\n\n";
 

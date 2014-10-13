@@ -91,7 +91,7 @@ my $role;
 
 my $firstline = 1;
 print "{\n";
-print "\t\"data\":[\n\n";
+print "\t\"data\":[\n";
 
 for $id ( keys %arr) {
 
@@ -106,7 +106,7 @@ for $id ( keys %arr) {
     print "\t\t\"{#".uc($role)."}\":\"" . $arr{$id}{$role} ."\",\n";
     $all .= "-".$arr{$id}{$role}."-";
   }
-  print "\t\t\"{#".uc("all")."}\":\"" . $all ."\",\n";
+  print "\t\t\"{#".uc("all")."}\":\"" . $all ."\"\n";
 
   print "\t}\n";
 }

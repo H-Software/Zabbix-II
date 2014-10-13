@@ -54,9 +54,6 @@ snmp iface advanced discovery
 
 {
         "data":[
-.
-.
-.
         {
                 "{#STATUS}":"1",
                 "{#NAME}":"ipip",
@@ -98,10 +95,6 @@ snmp iface advanced discovery
                 "{#ID}":"745",
                 "{#ALL}":"-2--ge-8/0/44--745-",
         }
-        ,
-.
-.
-.
         ]
 }
 ```

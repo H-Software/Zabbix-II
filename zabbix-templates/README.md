@@ -133,9 +133,24 @@ TDB
 
 :: on zabbix server
 
-import xml file as zabbix template
+* import xml file as zabbix template
 
-copy script "ibm_amm_snmpget.sh" into external script folder
+* copy script "ibm_amm_snmpget.sh" into external script folder
+
+* create "value mapping" ("administration" - general - value mapping)
+
+Name: IBM BC_AMM - Health Status
+
+Mappings:
+
+| Value | Mapped to    |
+| ----- | ------------:|
+|   0   | unkown       |
+|   1   | good         |
+|   2   | warning      |
+|   3   | bad          |
+
+or look at [example picture|https://github.com/czhujer/Zabbix-II/tree/master/zabbix-templates/ibm-bladecenter-chassis-amm/screenshots/ibm_amm_value_mapping.jpg]
 
 
 7. Template IBM Storwize Perf

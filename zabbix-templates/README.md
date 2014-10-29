@@ -150,7 +150,7 @@ Mappings:
 |   2   | warning      |
 |   3   | bad          |
 
-or look at [example picture|https://github.com/czhujer/Zabbix-II/tree/master/zabbix-templates/ibm-bladecenter-chassis-amm/screenshots/ibm_amm_value_mapping.jpg]
+or look at [example picture](https://github.com/czhujer/Zabbix-II/tree/master/zabbix-templates/ibm-bladecenter-chassis-amm/screenshots/ibm_amm_value_mapping.jpg)
 
 
 7. Template IBM Storwize Perf

@@ -9,7 +9,8 @@ function parse_results(){
     result=$(cat $file | awk '/'''$input''':[0-9]+/{ print $0 }' |awk -F':' '{print $2}')
 
     if [ "$result" = "" ]; then
-	sleep 60
+	check_values
+	echo "-1"
     else
 	echo $result
     fi
@@ -28,19 +29,20 @@ if [ "$input" = "" ]; then
   exit 22
 fi
 
-if [ ! -f $file ]; then
-  touch $file
-fi
+#if [ ! -f $file ]; then
+#  touch $file
+#fi
 
 #if test `find "$file" -mmin +15 > /dev/null 2>&1`; then
 if test `find "$file" -mmin +180 2> /dev/null`; then
     check_values
+	echo "-1"
 elif [ ! -s $file ]; then
     check_values
+	echo "-1"
+else
+    #return results
+    parse_results
 fi
 
-#return results
-parse_results
-
 exit 0
-

@@ -18,8 +18,11 @@ function parse_results(){
 }
 
 function check_values(){
-    /etc/zabbix/plugins/rh.yum.stats.exec.sh &
-    sleep 1
+
+    screen -d -m /etc/zabbix/plugins/rh.yum.stats.exec.sh
+
+#    /etc/zabbix/plugins/rh.yum.stats.exec.sh &
+#    sleep 1
 }
 
 input=$1

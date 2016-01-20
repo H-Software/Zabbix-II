@@ -103,7 +103,11 @@ Ubuntu LTS 12.04 x86_64
 
 Zabbix 2.0.x and 2.2 (appliance)
 
-5.1 instalation
+5.1 automatic instalation
+
+* use puppet module - https://github.com/H-Software/puppet-zabbixagent#usage---plugins
+
+5.2 manual instalation
 -------
 
 :: on monitored host

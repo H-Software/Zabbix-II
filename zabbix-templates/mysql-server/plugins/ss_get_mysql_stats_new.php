@@ -1,11 +1,11 @@
 <?php
 
 # ============================================================================
-# This program is part of Percona Monitoring Plugins
+# This program is part of $PROJECT_NAME$
 # License: GPL License (see COPYING)
-# Copyright 2008-2012 Baron Schwartz, 2012 Percona Inc.
+# Copyright 2008-$CURRENT_YEAR$ Baron Schwartz, 2012-$CURRENT_YEAR$ Percona
 # Authors:
-#  Baron Schwartz
+#  Baron Schwartz, Roman Vynar
 # ============================================================================
 
 # ============================================================================
@@ -27,38 +27,50 @@ if ( !array_key_exists('SCRIPT_FILENAME', $_SERVER)
 # here, you can define them in another file named the same as this file, with a
 # .cnf extension.
 # ============================================================================
-$mysql_user = 'zabbix';
-$mysql_pass = 'zabbixpassword';
+$mysql_user = 'mysql_zabbix_user';
+$mysql_pass = 'mysql_zabbix_pass';
 $mysql_port = 3306;
 $mysql_ssl  = FALSE;   # Whether to use SSL to connect to MySQL.
+$mysql_ssl_key  = '/etc/pki/tls/certs/mysql/client-key.pem';
+$mysql_ssl_cert = '/etc/pki/tls/certs/mysql/client-cert.pem';
+$mysql_ssl_ca   = '/etc/pki/tls/certs/mysql/ca-cert.pem';
+$mysql_connection_timeout = 5;
 
-$heartbeat  = '';      # db.tbl if you use pt-heartbeat from Percona Toolkit.
-$cache_dir  = '/tmp';  # If set, this uses caching to avoid multiple calls.
-$poll_time  = 300;     # Adjust to match your polling interval.
+$heartbeat = FALSE;        # Whether to use pt-heartbeat table for repl. delay calculation.
+$heartbeat_utc = FALSE;    # Whether pt-heartbeat is run with --utc option.
+$heartbeat_server_id = 0;  # Server id to associate with a heartbeat. Leave 0 if no preference.
+$heartbeat_table = 'percona.heartbeat'; # db.tbl.
+
+$cache_dir  = '/tmp/xx';  # If set, this uses caching to avoid multiple calls.
+$poll_time  = 30;     # Adjust to match your polling interval.
 $timezone   = null;    # If not set, uses the system default.  Example: "UTC"
 $chk_options = array (
    'innodb'  => true,    # Do you want to check InnoDB statistics?
    'master'  => true,    # Do you want to check binary logging?
    'slave'   => true,    # Do you want to check slave status?
    'procs'   => true,    # Do you want to check SHOW PROCESSLIST?
-   'get_qrt' => true,    # Get query response times from Percona Server?
+   'get_qrt' => true,    # Get query response times from Percona Server or MariaDB?
 );
 
 $use_ss    = FALSE; # Whether to use the script server or not
 $debug     = FALSE; # Define whether you want debugging behavior.
-#$debug_log = '/tmp/alpha'; # If $debug_log is a filename, it'll be used.
+$debug_log = ""; # If $debug_log is a filename, it'll be used.
 
 # ============================================================================
 # You should not need to change anything below this line.
 # ============================================================================
-$version = '1.0.0';
+$version = '$VERSION$';
 
 # ============================================================================
-# Include settings from an external config file (issue 39).
+# Include settings from an external config file.
 # ============================================================================
-if ( file_exists(__FILE__ . '.cnf' ) ) {
-   debug("Found configuration file " . __FILE__ . ".cnf");
+if ( file_exists('/etc/cacti/' . basename(__FILE__) . '.cnf' ) ) {
+   require('/etc/cacti/' . basename(__FILE__) . '.cnf');
+   debug('Found configuration file /etc/cacti/' . basename(__FILE__) . '.cnf');
+}
+elseif ( file_exists(__FILE__ . '.cnf' ) ) {
    require(__FILE__ . '.cnf');
+   debug('Found configuration file ' . __FILE__ . '.cnf');
 }
 
 # Make this a happy little script even when there are errors.
@@ -157,8 +169,12 @@ if ( !function_exists('array_change_key_case') ) {
 # Validate that the command-line options are here and correct
 # ============================================================================
 function validate_options($options) {
-   debug($options);
-   $opts = array('host', 'items', 'user', 'pass', 'heartbeat', 'nocache', 'port');
+   $opts = array('host', 'items', 'user', 'pass', 'nocache', 'port', 'server-id');
+   # Show help
+   if ( array_key_exists('help', $options) ) {
+      usage('');
+   }
+
    # Required command-line options
    foreach ( array('host', 'items') as $option ) {
       if ( !isset($options[$option]) || !$options[$option] ) {
@@ -176,21 +192,21 @@ function validate_options($options) {
 # Print out a brief usage summary
 # ============================================================================
 function usage($message) {
-   global $mysql_user, $mysql_pass, $mysql_port, $heartbeat;
+   global $mysql_user, $mysql_pass, $mysql_port;
 
    $usage = <<<EOF
 $message
 Usage: php ss_get_mysql_stats.php --host <host> --items <item,...> [OPTION]
 
-   --host      Hostname to connect to; use host:port syntax to specify a port
-               Use :/path/to/socket if you want to connect via a UNIX socket
-   --items     Comma-separated list of the items whose data you want
-   --user      MySQL username; defaults to $mysql_user if not given
-   --pass      MySQL password; defaults to $mysql_pass if not given
-   --heartbeat MySQL heartbeat table; defaults to '$heartbeat' (see pt-heartbeat)
-   --nocache   Do not cache results in a file
-   --port      MySQL port; defaults to $mysql_port if not given
-   --mysql_ssl Add the MYSQL_CLIENT_SSL flag to mysql_connect() call
+   --host               MySQL host
+   --items              Comma-separated list of the items whose data you want
+   --user               MySQL username
+   --pass               MySQL password
+   --port               MySQL port
+   --connection-timeout MySQL connection timeout
+   --server-id          Server id to associate with a heartbeat if heartbeat usage is enabled
+   --nocache            Do not cache results in a file
+   --help               Show usage
 
 EOF;
    die($usage);
@@ -201,39 +217,23 @@ EOF;
 # return them as an array ( arg => value )
 # ============================================================================
 function parse_cmdline( $args ) {
-   $result = array();
-   $cur_arg = '';
-   foreach ($args as $val) {
-      if ( strpos($val, '--') === 0 ) {
-         if ( strpos($val, '--no') === 0 ) {
-            # It's an option without an argument, but it's a --nosomething so
-            # it's OK.
-            $result[substr($val, 2)] = 1;
-            $cur_arg = '';
+   $options = array();
+   while (list($tmp, $p) = each($args)) {
+      if (strpos($p, '--') === 0) {
+         $param = substr($p, 2);
+         $value = null;
+         $nextparam = current($args);
+         if ($nextparam !== false && strpos($nextparam, '--') !==0) {
+            list($tmp, $value) = each($args);
          }
-         elseif ( $cur_arg ) { # Maybe the last --arg was an option with no arg
-            if ( $cur_arg == '--user' || $cur_arg == '--pass' || $cur_arg == '--port' ) {
-               # Special case because Cacti will pass these without an arg
-               $cur_arg = '';
-            }
-            else {
-               die("No arg: $cur_arg\n");
-            }
-         }
-         else {
-            $cur_arg = $val;
-         }
-      }
-      else {
-         $result[substr($cur_arg, 2)] = $val;
-         $cur_arg = '';
+         $options[$param] = $value;
       }
    }
-   if ( $cur_arg && ($cur_arg != '--user' && $cur_arg != '--pass' && $cur_arg != '--port') ) {
-      die("No arg: $cur_arg\n");
+   if ( array_key_exists('host', $options) ) {
+      $options['host'] = substr($options['host'], 0, 4) == 'tcp:' ? substr($options['host'], 4) : $options['host'];
    }
-   debug($result);
-   return $result;
+   debug($options);
+   return $options;
 }
 
 # ============================================================================
@@ -241,44 +241,26 @@ function parse_cmdline( $args ) {
 # top of this file.
 # ============================================================================
 function ss_get_mysql_stats( $options ) {
-   # Process connection options and connect to MySQL.
-   global $debug, $mysql_user, $mysql_pass, $heartbeat, $cache_dir, $poll_time,
-          $chk_options, $mysql_port, $mysql_ssl;
+   # Process connection options.
+   global $debug, $mysql_user, $mysql_pass, $cache_dir, $poll_time, $chk_options,
+          $mysql_port, $mysql_ssl, $mysql_ssl_key, $mysql_ssl_cert, $mysql_ssl_ca,
+          $mysql_connection_timeout,
+          $heartbeat, $heartbeat_table, $heartbeat_server_id, $heartbeat_utc;
 
-   # Connect to MySQL.
    $user = isset($options['user']) ? $options['user'] : $mysql_user;
    $pass = isset($options['pass']) ? $options['pass'] : $mysql_pass;
+   $host = $options['host'];
    $port = isset($options['port']) ? $options['port'] : $mysql_port;
-   $heartbeat = isset($options['heartbeat']) ? $options['heartbeat'] : $heartbeat;
-   # If there is a port, or if it's a non-standard port, we add ":$port" to the
-   # hostname.
-   $host_str  = $options['host']
-              . (isset($options['port']) || $port != 3306 ? ":$port" : '');
-   debug(array('connecting to', $host_str, $user, $pass));
-   if ( !extension_loaded('mysql') ) {
-      debug("The MySQL extension is not loaded");
-      die("The MySQL extension is not loaded");
-   }
-   if ( $mysql_ssl || (isset($options['mysql_ssl']) && $options['mysql_ssl']) ) {
-      $conn = mysql_connect($host_str, $user, $pass, true, MYSQL_CLIENT_SSL);
-   }
-   else {
-      $conn = mysql_connect($host_str, $user, $pass);
-   }
-   if ( !$conn ) {
-      debug("MySQL connection failed: " . mysql_error());
-      die("MySQL: " . mysql_error());
-   }
+   $connection_timeout = isset($options['connection-timeout']) ? $options['connection-timeout'] : $mysql_connection_timeout;
+   $heartbeat_server_id = isset($options['server-id']) ? $options['server-id'] : $heartbeat_server_id;
 
-   $sanitized_host
-       = str_replace(array(":", "/"), array("", "_"), $options['host']);
-   $cache_file = "$cache_dir/$sanitized_host-mysql_cacti_stats.txt"
-               . (isset($options['port']) || $port != 3306 ? ":$port" : '');
+   $sanitized_host = str_replace(array(":", "/"), array("", "_"), $host);
+   $cache_file = "$cache_dir/$sanitized_host-mysql_cacti_stats.txt" . ($port != 3306 ? ":$port" : '');
    debug("Cache file is $cache_file");
 
    # First, check the cache.
    $fp = null;
-   if ( !isset($options['nocache']) ) {
+   if ( $cache_dir && !array_key_exists('nocache', $options) ) {
       if ( $fp = fopen($cache_file, 'a+') ) {
          $locked = flock($fp, 1); # LOCK_SH
          if ( $locked ) {
@@ -310,15 +292,46 @@ function ss_get_mysql_stats( $options ) {
             }
          }
          else {
-            debug("Couldn't lock the cache file, ignoring it.");
             $fp = null;
+            debug("Couldn't lock the cache file, ignoring it");
          }
+      }
+      else {
+         $fp = null;
+         debug("Couldn't open the cache file");
       }
    }
    else {
-      $fp = null;
-      debug("Couldn't open the cache file");
+      debug("Caching is disabled.");
    }
+
+   # Connect to MySQL.
+   debug(array('Connecting to', $host, $port, $user, $pass));
+   if ( !extension_loaded('mysqli') ) {
+      debug("PHP MySQLi extension is not loaded");
+      die("PHP MySQLi extension is not loaded");
+   }
+   if ( $mysql_ssl ) {
+      $conn = mysqli_init();
+      $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, $connection_timeout);
+      mysqli_ssl_set($conn, $mysql_ssl_key, $mysql_ssl_cert, $mysql_ssl_ca, NULL, NULL);
+      mysqli_real_connect($conn, $host, $user, $pass, NULL, $port);
+   }
+   else {
+      $conn = mysqli_init();
+      $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, $connection_timeout);
+      mysqli_real_connect($conn, $host, $user, $pass, NULL, $port);
+   }
+   if ( mysqli_connect_errno() ) {
+      debug("MySQL connection failed: " . mysqli_connect_error());
+      die("ERROR: " . mysqli_connect_error());
+   }
+
+   # MySQL server version.
+   # The form of this version number is main_version * 10000 + minor_version * 100 + sub_version
+   # i.e. version 5.5.44 is 50544.
+   $mysql_version = mysqli_get_server_version($conn);
+   debug("MySQL server version is " . $mysql_version);
 
    # Set up variables.
    $status = array( # Holds the result of SHOW STATUS, SHOW INNODB STATUS, etc
@@ -336,22 +349,22 @@ function ss_get_mysql_stats( $options ) {
       'innodb_sem_wait_time_ms'  => 0,
       # Values for the 'state' column from SHOW PROCESSLIST (converted to
       # lowercase, with spaces replaced by underscores)
-      'State_closing_tables'       => null,
-      'State_copying_to_tmp_table' => null,
-      'State_end'                  => null,
-      'State_freeing_items'        => null,
-      'State_init'                 => null,
-      'State_locked'               => null,
-      'State_login'                => null,
-      'State_preparing'            => null,
-      'State_reading_from_net'     => null,
-      'State_sending_data'         => null,
-      'State_sorting_result'       => null,
-      'State_statistics'           => null,
-      'State_updating'             => null,
-      'State_writing_to_net'       => null,
-      'State_none'                 => null,
-      'State_other'                => null, # Everything not listed above
+      'State_closing_tables'       => 0,
+      'State_copying_to_tmp_table' => 0,
+      'State_end'                  => 0,
+      'State_freeing_items'        => 0,
+      'State_init'                 => 0,
+      'State_locked'               => 0,
+      'State_login'                => 0,
+      'State_preparing'            => 0,
+      'State_reading_from_net'     => 0,
+      'State_sending_data'         => 0,
+      'State_sorting_result'       => 0,
+      'State_statistics'           => 0,
+      'State_updating'             => 0,
+      'State_writing_to_net'       => 0,
+      'State_none'                 => 0,
+      'State_other'                => 0, # Everything not listed above
    );
 
    # Get SHOW STATUS and convert the name-value array into a simple
@@ -369,7 +382,14 @@ function ss_get_mysql_stats( $options ) {
 
    # Get SHOW SLAVE STATUS, and add it to the $status array.
    if ( $chk_options['slave'] ) {
-      $result = run_query("SHOW SLAVE STATUS", $conn);
+      # Leverage lock-free SHOW SLAVE STATUS if available
+      $result = run_query("SHOW SLAVE STATUS NONBLOCKING", $conn);
+      if ( !$result ) {
+         $result = run_query("SHOW SLAVE STATUS NOLOCK", $conn);
+         if ( !$result ) {
+            $result = run_query("SHOW SLAVE STATUS", $conn);
+         }
+      }
       $slave_status_rows_gotten = 0;
       foreach ( $result as $row ) {
          $slave_status_rows_gotten++;
@@ -381,9 +401,16 @@ function ss_get_mysql_stats( $options ) {
 
          # Check replication heartbeat, if present.
          if ( $heartbeat ) {
+            if ( $heartbeat_utc ) {
+               $now_func = 'UNIX_TIMESTAMP(UTC_TIMESTAMP)';
+            }
+            else {
+               $now_func = 'UNIX_TIMESTAMP()';
+            }
             $result2 = run_query(
-               "SELECT MAX(GREATEST(0, UNIX_TIMESTAMP() - UNIX_TIMESTAMP(ts) - 1))"
-               . " AS delay FROM $heartbeat", $conn);
+               "SELECT MAX($now_func - ROUND(UNIX_TIMESTAMP(ts)))"
+               . " AS delay FROM $heartbeat_table"
+               . " WHERE $heartbeat_server_id = 0 OR server_id = $heartbeat_server_id", $conn);
             $slave_delay_rows_gotten = 0;
             foreach ( $result2 as $row2 ) {
                $slave_delay_rows_gotten++;
@@ -393,7 +420,7 @@ function ss_get_mysql_stats( $options ) {
                   $status['slave_lag'] = $row2['delay'];
                }
                else {
-                  debug("Couldn't get slave lag from $heartbeat");
+                  debug("Couldn't get slave lag from $heartbeat_table");
                }
             }
             if ( $slave_delay_rows_gotten == 0 ) {
@@ -459,25 +486,35 @@ function ss_get_mysql_stats( $options ) {
       }
    }
 
+   # Get SHOW ENGINES to be able to determine whether InnoDB is present.
+   $engines = array();
+   $result = run_query("SHOW ENGINES", $conn);
+   foreach ( $result as $row ) {
+      $engines[$row[0]] = $row[1];
+   }
+
    # Get SHOW INNODB STATUS and extract the desired metrics from it, then add
    # those to the array too.
    if ( $chk_options['innodb']
-         && array_key_exists('have_innodb', $status)
-         && $status['have_innodb'] == 'YES'
+         && array_key_exists('InnoDB', $engines)
+         && $engines['InnoDB'] == 'YES'
+         || $engines['InnoDB'] == 'DEFAULT'
    ) {
       $result        = run_query("SHOW /*!50000 ENGINE*/ INNODB STATUS", $conn);
       $istatus_text = $result[0]['Status'];
-      $istatus_vals = get_innodb_array($istatus_text);
+      $istatus_vals = get_innodb_array($istatus_text, $mysql_version);
 
-      # Get response time histogram from Percona Server if enabled.
+      # Get response time histogram from Percona Server or MariaDB if enabled.
       if ( $chk_options['get_qrt']
-           && isset($status['have_response_time_distribution']) 
-           &&      ($status['have_response_time_distribution'] == 'YES'))
+           && (( isset($status['have_response_time_distribution'])
+           && $status['have_response_time_distribution'] == 'YES')
+           || (isset($status['query_response_time_stats'])
+           && $status['query_response_time_stats'] == 'ON')) )
       {
          debug('Getting query time histogram');
          $i = 0;
          $result = run_query(
-            "SELECT `count`, total * 1000000 AS total "
+            "SELECT `count`, ROUND(total * 1000000) AS total "
                . "FROM INFORMATION_SCHEMA.QUERY_RESPONSE_TIME "
                . "WHERE `time` <> 'TOO LONG'",
             $conn);
@@ -526,6 +563,8 @@ function ss_get_mysql_stats( $options ) {
          'Innodb_rows_inserted'           => 'rows_inserted',
          'Innodb_rows_read'               => 'rows_read',
          'Innodb_rows_updated'            => 'rows_updated',
+         'Innodb_buffer_pool_reads'       => 'pool_reads',
+         'Innodb_buffer_pool_read_requests' => 'pool_read_requests',
       );
 
       # If the SHOW STATUS value exists, override...
@@ -573,199 +612,216 @@ function ss_get_mysql_stats( $options ) {
    # must come right after the word MAGIC_VARS_DEFINITIONS.  The Perl script
    # parses it and uses it as a Perl variable.
    $keys = array(
-      'Key_read_requests'           =>  'g0',
-      'Key_reads'                   =>  'g1',
-      'Key_write_requests'          =>  'g2',
-      'Key_writes'                  =>  'g3',
-      'history_list'                =>  'g4',
-      'innodb_transactions'         =>  'g5',
-      'read_views'                  =>  'g6',
-      'current_transactions'        =>  'g7',
-      'locked_transactions'         =>  'g8',
-      'active_transactions'         =>  'g9',
-      'pool_size'                   =>  'ga',
-      'free_pages'                  =>  'gb',
-      'database_pages'              =>  'gc',
-      'modified_pages'              =>  'gd',
-      'pages_read'                  =>  'ge',
-      'pages_created'               =>  'gf',
-      'pages_written'               =>  'gg',
-      'file_fsyncs'                 =>  'gh',
-      'file_reads'                  =>  'gi',
-      'file_writes'                 =>  'gj',
-      'log_writes'                  =>  'gk',
-      'pending_aio_log_ios'         =>  'gl',
-      'pending_aio_sync_ios'        =>  'gm',
-      'pending_buf_pool_flushes'    =>  'gn',
-      'pending_chkp_writes'         =>  'go',
-      'pending_ibuf_aio_reads'      =>  'gp',
-      'pending_log_flushes'         =>  'gq',
-      'pending_log_writes'          =>  'gr',
-      'pending_normal_aio_reads'    =>  'gs',
-      'pending_normal_aio_writes'   =>  'gt',
-      'ibuf_inserts'                =>  'gu',
-      'ibuf_merged'                 =>  'gv',
-      'ibuf_merges'                 =>  'gw',
-      'spin_waits'                  =>  'gx',
-      'spin_rounds'                 =>  'gy',
-      'os_waits'                    =>  'gz',
-      'rows_inserted'               =>  'h0',
-      'rows_updated'                =>  'h1',
-      'rows_deleted'                =>  'h2',
-      'rows_read'                   =>  'h3',
-      'Table_locks_waited'          =>  'h4',
-      'Table_locks_immediate'       =>  'h5',
-      'Slow_queries'                =>  'h6',
-      'Open_files'                  =>  'h7',
-      'Open_tables'                 =>  'h8',
-      'Opened_tables'               =>  'h9',
-      'innodb_open_files'           =>  'ha',
-      'open_files_limit'            =>  'hb',
-      'table_cache'                 =>  'hc',
-      'Aborted_clients'             =>  'hd',
-      'Aborted_connects'            =>  'he',
-      'Max_used_connections'        =>  'hf',
-      'Slow_launch_threads'         =>  'hg',
-      'Threads_cached'              =>  'hh',
-      'Threads_connected'           =>  'hi',
-      'Threads_created'             =>  'hj',
-      'Threads_running'             =>  'hk',
-      'max_connections'             =>  'hl',
-      'thread_cache_size'           =>  'hm',
-      'Connections'                 =>  'hn',
-      'slave_running'               =>  'ho',
-      'slave_stopped'               =>  'hp',
-      'Slave_retried_transactions'  =>  'hq',
-      'slave_lag'                   =>  'hr',
-      'Slave_open_temp_tables'      =>  'hs',
-      'Qcache_free_blocks'          =>  'ht',
-      'Qcache_free_memory'          =>  'hu',
-      'Qcache_hits'                 =>  'hv',
-      'Qcache_inserts'              =>  'hw',
-      'Qcache_lowmem_prunes'        =>  'hx',
-      'Qcache_not_cached'           =>  'hy',
-      'Qcache_queries_in_cache'     =>  'hz',
-      'Qcache_total_blocks'         =>  'i0',
-      'query_cache_size'            =>  'i1',
-      'Questions'                   =>  'i2',
-      'Com_update'                  =>  'i3',
-      'Com_insert'                  =>  'i4',
-      'Com_select'                  =>  'i5',
-      'Com_delete'                  =>  'i6',
-      'Com_replace'                 =>  'i7',
-      'Com_load'                    =>  'i8',
-      'Com_update_multi'            =>  'i9',
-      'Com_insert_select'           =>  'ia',
-      'Com_delete_multi'            =>  'ib',
-      'Com_replace_select'          =>  'ic',
-      'Select_full_join'            =>  'id',
-      'Select_full_range_join'      =>  'ie',
-      'Select_range'                =>  'if',
-      'Select_range_check'          =>  'ig',
-      'Select_scan'                 =>  'ih',
-      'Sort_merge_passes'           =>  'ii',
-      'Sort_range'                  =>  'ij',
-      'Sort_rows'                   =>  'ik',
-      'Sort_scan'                   =>  'il',
-      'Created_tmp_tables'          =>  'im',
-      'Created_tmp_disk_tables'     =>  'in',
-      'Created_tmp_files'           =>  'io',
-      'Bytes_sent'                  =>  'ip',
-      'Bytes_received'              =>  'iq',
-      'innodb_log_buffer_size'      =>  'ir',
-      'unflushed_log'               =>  'is',
-      'log_bytes_flushed'           =>  'it',
-      'log_bytes_written'           =>  'iu',
-      'relay_log_space'             =>  'iv',
-      'binlog_cache_size'           =>  'iw',
-      'Binlog_cache_disk_use'       =>  'ix',
-      'Binlog_cache_use'            =>  'iy',
-      'binary_log_space'            =>  'iz',
-      'innodb_locked_tables'        =>  'j0',
-      'innodb_lock_structs'         =>  'j1',
-      'State_closing_tables'        =>  'j2',
-      'State_copying_to_tmp_table'  =>  'j3',
-      'State_end'                   =>  'j4',
-      'State_freeing_items'         =>  'j5',
-      'State_init'                  =>  'j6',
-      'State_locked'                =>  'j7',
-      'State_login'                 =>  'j8',
-      'State_preparing'             =>  'j9',
-      'State_reading_from_net'      =>  'ja',
-      'State_sending_data'          =>  'jb',
-      'State_sorting_result'        =>  'jc',
-      'State_statistics'            =>  'jd',
-      'State_updating'              =>  'je',
-      'State_writing_to_net'        =>  'jf',
-      'State_none'                  =>  'jg',
-      'State_other'                 =>  'jh',
-      'Handler_commit'              =>  'ji',
-      'Handler_delete'              =>  'jj',
-      'Handler_discover'            =>  'jk',
-      'Handler_prepare'             =>  'jl',
-      'Handler_read_first'          =>  'jm',
-      'Handler_read_key'            =>  'jn',
-      'Handler_read_next'           =>  'jo',
-      'Handler_read_prev'           =>  'jp',
-      'Handler_read_rnd'            =>  'jq',
-      'Handler_read_rnd_next'       =>  'jr',
-      'Handler_rollback'            =>  'js',
-      'Handler_savepoint'           =>  'jt',
-      'Handler_savepoint_rollback'  =>  'ju',
-      'Handler_update'              =>  'jv',
-      'Handler_write'               =>  'jw',
-      'innodb_tables_in_use'        =>  'jx',
-      'innodb_lock_wait_secs'       =>  'jy',
-      'hash_index_cells_total'      =>  'jz',
-      'hash_index_cells_used'       =>  'k0',
-      'total_mem_alloc'             =>  'k1',
-      'additional_pool_alloc'       =>  'k2',
-      'uncheckpointed_bytes'        =>  'k3',
-      'ibuf_used_cells'             =>  'k4',
-      'ibuf_free_cells'             =>  'k5',
-      'ibuf_cell_count'             =>  'k6',
-      'adaptive_hash_memory'        =>  'k7',
-      'page_hash_memory'            =>  'k8',
-      'dictionary_cache_memory'     =>  'k9',
-      'file_system_memory'          =>  'ka',
-      'lock_system_memory'          =>  'kb',
-      'recovery_system_memory'      =>  'kc',
-      'thread_hash_memory'          =>  'kd',
-      'innodb_sem_waits'            =>  'ke',
-      'innodb_sem_wait_time_ms'     =>  'kf',
-      'Key_buf_bytes_unflushed'     =>  'kg',
-      'Key_buf_bytes_used'          =>  'kh',
-      'key_buffer_size'             =>  'ki',
-      'Innodb_row_lock_time'        =>  'kj',
-      'Innodb_row_lock_waits'       =>  'kk',
-      'Query_time_count_00'         =>  'kl',
-      'Query_time_count_01'         =>  'km',
-      'Query_time_count_02'         =>  'kn',
-      'Query_time_count_03'         =>  'ko',
-      'Query_time_count_04'         =>  'kp',
-      'Query_time_count_05'         =>  'kq',
-      'Query_time_count_06'         =>  'kr',
-      'Query_time_count_07'         =>  'ks',
-      'Query_time_count_08'         =>  'kt',
-      'Query_time_count_09'         =>  'ku',
-      'Query_time_count_10'         =>  'kv',
-      'Query_time_count_11'         =>  'kw',
-      'Query_time_count_12'         =>  'kx',
-      'Query_time_count_13'         =>  'ky',
-      'Query_time_total_00'         =>  'kz',
-      'Query_time_total_01'         =>  'la',
-      'Query_time_total_02'         =>  'lb',
-      'Query_time_total_03'         =>  'lc',
-      'Query_time_total_04'         =>  'ld',
-      'Query_time_total_05'         =>  'le',
-      'Query_time_total_06'         =>  'lf',
-      'Query_time_total_07'         =>  'lg',
-      'Query_time_total_08'         =>  'lh',
-      'Query_time_total_09'         =>  'li',
-      'Query_time_total_10'         =>  'lj',
-      'Query_time_total_11'         =>  'lk',
-      'Query_time_total_12'         =>  'll',
-      'Query_time_total_13'         =>  'lm',
+      'Key_read_requests'           =>  'gg',
+      'Key_reads'                   =>  'gh',
+      'Key_write_requests'          =>  'gi',
+      'Key_writes'                  =>  'gj',
+      'history_list'                =>  'gk',
+      'innodb_transactions'         =>  'gl',
+      'read_views'                  =>  'gm',
+      'current_transactions'        =>  'gn',
+      'locked_transactions'         =>  'go',
+      'active_transactions'         =>  'gp',
+      'pool_size'                   =>  'gq',
+      'free_pages'                  =>  'gr',
+      'database_pages'              =>  'gs',
+      'modified_pages'              =>  'gt',
+      'pages_read'                  =>  'gu',
+      'pages_created'               =>  'gv',
+      'pages_written'               =>  'gw',
+      'file_fsyncs'                 =>  'gx',
+      'file_reads'                  =>  'gy',
+      'file_writes'                 =>  'gz',
+      'log_writes'                  =>  'hg',
+      'pending_aio_log_ios'         =>  'hh',
+      'pending_aio_sync_ios'        =>  'hi',
+      'pending_buf_pool_flushes'    =>  'hj',
+      'pending_chkp_writes'         =>  'hk',
+      'pending_ibuf_aio_reads'      =>  'hl',
+      'pending_log_flushes'         =>  'hm',
+      'pending_log_writes'          =>  'hn',
+      'pending_normal_aio_reads'    =>  'ho',
+      'pending_normal_aio_writes'   =>  'hp',
+      'ibuf_inserts'                =>  'hq',
+      'ibuf_merged'                 =>  'hr',
+      'ibuf_merges'                 =>  'hs',
+      'spin_waits'                  =>  'ht',
+      'spin_rounds'                 =>  'hu',
+      'os_waits'                    =>  'hv',
+      'rows_inserted'               =>  'hw',
+      'rows_updated'                =>  'hx',
+      'rows_deleted'                =>  'hy',
+      'rows_read'                   =>  'hz',
+      'Table_locks_waited'          =>  'ig',
+      'Table_locks_immediate'       =>  'ih',
+      'Slow_queries'                =>  'ii',
+      'Open_files'                  =>  'ij',
+      'Open_tables'                 =>  'ik',
+      'Opened_tables'               =>  'il',
+      'innodb_open_files'           =>  'im',
+      'open_files_limit'            =>  'in',
+      'table_cache'                 =>  'io',
+      'Aborted_clients'             =>  'ip',
+      'Aborted_connects'            =>  'iq',
+      'Max_used_connections'        =>  'ir',
+      'Slow_launch_threads'         =>  'is',
+      'Threads_cached'              =>  'it',
+      'Threads_connected'           =>  'iu',
+      'Threads_created'             =>  'iv',
+      'Threads_running'             =>  'iw',
+      'max_connections'             =>  'ix',
+      'thread_cache_size'           =>  'iy',
+      'Connections'                 =>  'iz',
+      'slave_running'               =>  'jg',
+      'slave_stopped'               =>  'jh',
+      'Slave_retried_transactions'  =>  'ji',
+      'slave_lag'                   =>  'jj',
+      'Slave_open_temp_tables'      =>  'jk',
+      'Qcache_free_blocks'          =>  'jl',
+      'Qcache_free_memory'          =>  'jm',
+      'Qcache_hits'                 =>  'jn',
+      'Qcache_inserts'              =>  'jo',
+      'Qcache_lowmem_prunes'        =>  'jp',
+      'Qcache_not_cached'           =>  'jq',
+      'Qcache_queries_in_cache'     =>  'jr',
+      'Qcache_total_blocks'         =>  'js',
+      'query_cache_size'            =>  'jt',
+      'Questions'                   =>  'ju',
+      'Com_update'                  =>  'jv',
+      'Com_insert'                  =>  'jw',
+      'Com_select'                  =>  'jx',
+      'Com_delete'                  =>  'jy',
+      'Com_replace'                 =>  'jz',
+      'Com_load'                    =>  'kg',
+      'Com_update_multi'            =>  'kh',
+      'Com_insert_select'           =>  'ki',
+      'Com_delete_multi'            =>  'kj',
+      'Com_replace_select'          =>  'kk',
+      'Select_full_join'            =>  'kl',
+      'Select_full_range_join'      =>  'km',
+      'Select_range'                =>  'kn',
+      'Select_range_check'          =>  'ko',
+      'Select_scan'                 =>  'kp',
+      'Sort_merge_passes'           =>  'kq',
+      'Sort_range'                  =>  'kr',
+      'Sort_rows'                   =>  'ks',
+      'Sort_scan'                   =>  'kt',
+      'Created_tmp_tables'          =>  'ku',
+      'Created_tmp_disk_tables'     =>  'kv',
+      'Created_tmp_files'           =>  'kw',
+      'Bytes_sent'                  =>  'kx',
+      'Bytes_received'              =>  'ky',
+      'innodb_log_buffer_size'      =>  'kz',
+      'unflushed_log'               =>  'lg',
+      'log_bytes_flushed'           =>  'lh',
+      'log_bytes_written'           =>  'li',
+      'relay_log_space'             =>  'lj',
+      'binlog_cache_size'           =>  'lk',
+      'Binlog_cache_disk_use'       =>  'll',
+      'Binlog_cache_use'            =>  'lm',
+      'binary_log_space'            =>  'ln',
+      'innodb_locked_tables'        =>  'lo',
+      'innodb_lock_structs'         =>  'lp',
+      'State_closing_tables'        =>  'lq',
+      'State_copying_to_tmp_table'  =>  'lr',
+      'State_end'                   =>  'ls',
+      'State_freeing_items'         =>  'lt',
+      'State_init'                  =>  'lu',
+      'State_locked'                =>  'lv',
+      'State_login'                 =>  'lw',
+      'State_preparing'             =>  'lx',
+      'State_reading_from_net'      =>  'ly',
+      'State_sending_data'          =>  'lz',
+      'State_sorting_result'        =>  'mg',
+      'State_statistics'            =>  'mh',
+      'State_updating'              =>  'mi',
+      'State_writing_to_net'        =>  'mj',
+      'State_none'                  =>  'mk',
+      'State_other'                 =>  'ml',
+      'Handler_commit'              =>  'mm',
+      'Handler_delete'              =>  'mn',
+      'Handler_discover'            =>  'mo',
+      'Handler_prepare'             =>  'mp',
+      'Handler_read_first'          =>  'mq',
+      'Handler_read_key'            =>  'mr',
+      'Handler_read_next'           =>  'ms',
+      'Handler_read_prev'           =>  'mt',
+      'Handler_read_rnd'            =>  'mu',
+      'Handler_read_rnd_next'       =>  'mv',
+      'Handler_rollback'            =>  'mw',
+      'Handler_savepoint'           =>  'mx',
+      'Handler_savepoint_rollback'  =>  'my',
+      'Handler_update'              =>  'mz',
+      'Handler_write'               =>  'ng',
+      'innodb_tables_in_use'        =>  'nh',
+      'innodb_lock_wait_secs'       =>  'ni',
+      'hash_index_cells_total'      =>  'nj',
+      'hash_index_cells_used'       =>  'nk',
+      'total_mem_alloc'             =>  'nl',
+      'additional_pool_alloc'       =>  'nm',
+      'uncheckpointed_bytes'        =>  'nn',
+      'ibuf_used_cells'             =>  'no',
+      'ibuf_free_cells'             =>  'np',
+      'ibuf_cell_count'             =>  'nq',
+      'adaptive_hash_memory'        =>  'nr',
+      'page_hash_memory'            =>  'ns',
+      'dictionary_cache_memory'     =>  'nt',
+      'file_system_memory'          =>  'nu',
+      'lock_system_memory'          =>  'nv',
+      'recovery_system_memory'      =>  'nw',
+      'thread_hash_memory'          =>  'nx',
+      'innodb_sem_waits'            =>  'ny',
+      'innodb_sem_wait_time_ms'     =>  'nz',
+      'Key_buf_bytes_unflushed'     =>  'og',
+      'Key_buf_bytes_used'          =>  'oh',
+      'key_buffer_size'             =>  'oi',
+      'Innodb_row_lock_time'        =>  'oj',
+      'Innodb_row_lock_waits'       =>  'ok',
+      'Query_time_count_00'         =>  'ol',
+      'Query_time_count_01'         =>  'om',
+      'Query_time_count_02'         =>  'on',
+      'Query_time_count_03'         =>  'oo',
+      'Query_time_count_04'         =>  'op',
+      'Query_time_count_05'         =>  'oq',
+      'Query_time_count_06'         =>  'or',
+      'Query_time_count_07'         =>  'os',
+      'Query_time_count_08'         =>  'ot',
+      'Query_time_count_09'         =>  'ou',
+      'Query_time_count_10'         =>  'ov',
+      'Query_time_count_11'         =>  'ow',
+      'Query_time_count_12'         =>  'ox',
+      'Query_time_count_13'         =>  'oy',
+      'Query_time_total_00'         =>  'oz',
+      'Query_time_total_01'         =>  'pg',
+      'Query_time_total_02'         =>  'ph',
+      'Query_time_total_03'         =>  'pi',
+      'Query_time_total_04'         =>  'pj',
+      'Query_time_total_05'         =>  'pk',
+      'Query_time_total_06'         =>  'pl',
+      'Query_time_total_07'         =>  'pm',
+      'Query_time_total_08'         =>  'pn',
+      'Query_time_total_09'         =>  'po',
+      'Query_time_total_10'         =>  'pp',
+      'Query_time_total_11'         =>  'pq',
+      'Query_time_total_12'         =>  'pr',
+      'Query_time_total_13'         =>  'ps',
+      'wsrep_replicated_bytes'      =>  'pt',
+      'wsrep_received_bytes'        =>  'pu',
+      'wsrep_replicated'            =>  'pv',
+      'wsrep_received'              =>  'pw',
+      'wsrep_local_cert_failures'   =>  'px',
+      'wsrep_local_bf_aborts'       =>  'py',
+      'wsrep_local_send_queue'      =>  'pz',
+      'wsrep_local_recv_queue'      =>  'qg',
+      'wsrep_cluster_size'          =>  'qh',
+      'wsrep_cert_deps_distance'    =>  'qi',
+      'wsrep_apply_window'          =>  'qj',
+      'wsrep_commit_window'         =>  'qk',
+      'wsrep_flow_control_paused'   =>  'ql',
+      'wsrep_flow_control_sent'     =>  'qm',
+      'wsrep_flow_control_recv'     =>  'qn',
+      'pool_reads'                  =>  'qo',
+      'pool_read_requests'          =>  'qp',
    );
 
    # Return the output.
@@ -792,7 +848,7 @@ function ss_get_mysql_stats( $options ) {
 # MySQL 5.0, and XtraDB or enhanced InnoDB from Percona if applicable.  Note
 # that extra leading spaces are ignored due to trim().
 # ============================================================================
-function get_innodb_array($text) {
+function get_innodb_array($text, $mysql_version) {
    $results  = array(
       'spin_waits'  => array(),
       'spin_rounds' => array(),
@@ -897,16 +953,32 @@ function get_innodb_array($text) {
       elseif ( strpos($line, 'Trx id counter') === 0 ) {
          # The beginning of the TRANSACTIONS section: start counting
          # transactions
-         # Trx id counter 0 1170664159
-         # Trx id counter 861B144C
-         $results['innodb_transactions'] = make_bigint(
-            $row[3], (isset($row[4]) ? $row[4] : null));
+         if ( $mysql_version < 50600 ) {
+            # For versions prior 5.6: two decimals or one hex
+            # Trx id counter 0 1170664159
+            # Trx id counter 861B144C
+            $results['innodb_transactions'] = isset($row[4]) ? make_bigint(
+               $row[3], $row[4]) : base_convert($row[3], 16, 10);
+         }
+         else {
+            # For versions 5.6+ and MariaDB 10.x: one decimal
+            # Trx id counter 2903813
+            $results['innodb_transactions'] = $row[3];
+         }
          $txn_seen = TRUE;
       }
       elseif ( strpos($line, 'Purge done for trx') === 0 ) {
-         # Purge done for trx's n:o < 0 1170663853 undo n:o < 0 0
-         # Purge done for trx's n:o < 861B135D undo n:o < 0
-         $purged_to = make_bigint($row[6], $row[7] == 'undo' ? null : $row[7]);
+         if ( $mysql_version < 50600 ) {
+            # For versions prior 5.6: two decimals or one hex
+            # Purge done for trx's n:o < 0 1170663853 undo n:o < 0 0
+            # Purge done for trx's n:o < 861B135D undo n:o < 0
+            $purged_to = $row[7] == 'undo' ? base_convert($row[6], 16, 10) : make_bigint($row[6], $row[7]);
+         }
+         else {
+            # For versions 5.6+ and MariaDB 10.x: one decimal
+            # Purge done for trx's n:o < 2903354 undo n:o < 0 state: running but idle
+            $purged_to = $row[6];
+         }
          $results['unpurged_txns']
             = big_sub($results['innodb_transactions'], $purged_to);
       }
@@ -1051,8 +1123,9 @@ function get_innodb_array($text) {
       }
 
       # BUFFER POOL AND MEMORY
-      elseif (strpos($line, "Total memory allocated") === 0 ) {
+      elseif (strpos($line, "Total memory allocated") === 0 && strpos($line, "in additional pool allocated") > 0 ) {
          # Total memory allocated 29642194944; in additional pool allocated 0
+         # Total memory allocated by read views 96
          $results['total_mem_alloc']       = to_int($row[3]);
          $results['additional_pool_alloc'] = to_int($row[8]);
       }
@@ -1148,20 +1221,14 @@ function get_innodb_array($text) {
 
 
 # ============================================================================
-# Returns a bigint from two ulint or a single hex number.  This is tested in
+# Returns a bigint from two ulint.  This is tested in
 # t/mysql_stats.php and copied, without tests, to ss_get_by_ssh.php.
 # ============================================================================
-function make_bigint ($hi, $lo = null) {
+function make_bigint ($hi, $lo) {
    debug(array($hi, $lo));
-   if ( is_null($lo) ) {
-      # Assume it is a hex string representation.
-      return base_convert($hi, 16, 10);
-   }
-   else {
-      $hi = $hi ? $hi : '0'; # Handle empty-string or whatnot
-      $lo = $lo ? $lo : '0';
-      return big_add(big_multiply($hi, 4294967296), $lo);
-   }
+   $hi = $hi ? $hi : '0'; # Handle empty-string or whatnot
+   $lo = $lo ? $lo : '0';
+   return big_add(big_multiply($hi, 4294967296), $lo);
 }
 
 # ============================================================================
@@ -1189,23 +1256,29 @@ function to_int ( $str ) {
 }
 
 # ============================================================================
-# Wrap mysql_query in error-handling, and instead of returning the result,
+# Wrap mysqli_query in error-handling, and instead of returning the result,
 # return an array of arrays in the result.
 # ============================================================================
 function run_query($sql, $conn) {
    global $debug;
    debug($sql);
-   $result = @mysql_query($sql, $conn);
-   if ( $debug ) {
-      $error = @mysql_error($conn);
+   $result = @mysqli_query($conn, $sql);
+   if ( $debug && strpos($sql, 'SHOW SLAVE STATUS ') === false ) {
+      $error = @mysqli_error($conn);
       if ( $error ) {
          debug(array($sql, $error));
          die("SQLERR $error in $sql");
       }
    }
    $array = array();
-   while ( $row = @mysql_fetch_array($result) ) {
-      $array[] = $row;
+   $count = @mysqli_num_rows($result);
+   if ( $count > 10000 ) {
+      debug('Abnormal number of rows returned: ' . $count);
+   }
+   else {
+      while ( $row = @mysqli_fetch_array($result) ) {
+         $array[] = $row;
+      }
    }
    debug(array($sql, $array));
    return $array;
@@ -1313,7 +1386,7 @@ function debug($val) {
       if ( !count($calls) ) {
          $calls[] = "at $file:$line";
       }
-      fwrite($fp, date('Y-m-d h:i:s') . ' ' . implode(' <- ', $calls));
+      fwrite($fp, date('Y-m-d H:i:s') . ' ' . implode(' <- ', $calls));
       fwrite($fp, "\n" . var_export($val, TRUE) . "\n");
       fclose($fp);
    }

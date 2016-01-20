@@ -45,6 +45,8 @@ NETX INFO in Juniper-switches folder...
 3. mysql-server
 ------
 
+* tested on Centos 6.x and Zabbix 2.2
+
 * files with suffix "_new" is based/copied from this repo https://github.com/percona/percona-monitoring-plugins
 
 * others files in from mysql templates from https://github.com/zabbix/zabbix-community-repos
@@ -57,7 +59,12 @@ NETX INFO in Juniper-switches folder...
 
 * https://www.percona.com/doc/percona-monitoring-plugins/1.1/cacti/mysql-templates.html
 
-3.2 installation
+3.2 automatic instalation
+------
+
+* use puppet module - https://github.com/H-Software/puppet-zabbixagent#usage---plugins
+
+3.3 manual installation
 -------
 
 On monitored host:

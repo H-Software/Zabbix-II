@@ -45,8 +45,30 @@ NETX INFO in Juniper-switches folder...
 3. mysql-server
 ------
 
-from http://www.alexanderjohn.co.uk/2013/02/01/monitoring-mysql-with-zabbix-using-the-appaloosa-zabbix-templates/ 
-and https://www.zabbix.com/forum/showthread.php?t=26503
+* files with suffix "_new" is based/copied from this repo https://github.com/percona/percona-monitoring-plugins
+
+* others files in from mysql templates from https://github.com/zabbix/zabbix-community-repos
+
+~~* from http://www.alexanderjohn.co.uk/2013/02/01/monitoring-mysql-with-zabbix-using-the-appaloosa-zabbix-templates/ ~~
+~~* and https://www.zabbix.com/forum/showthread.php?t=26503~~
+
+3.1 Monitored items / Docs
+------
+
+* https://www.percona.com/doc/percona-monitoring-plugins/1.1/cacti/mysql-templates.html
+
+3.2 installation
+-------
+
+On monitored host:
+
+* copy files from scripts folder into /etc/zabbix/plugins
+
+* copy files from zabbix_agent into /etc/zabbix/zabbix_agentd
+
+on zabbix server:
+
+* import xml as template
 
 4. rabbitmq-server
 ------

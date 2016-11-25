@@ -1,0 +1,7 @@
+#
+#zabbix ALL = NOPASSWD: /etc/zabbix/plugins/raidc_discover-3ware.sh
+#
+#zabbix ALL = NOPASSWD: /etc/zabbix/plugins/raidc_smart-3ware.sh
+#
+zabbix ALL = NOPASSWD: /etc/zabbix/plugins/3ware.sh *
+
